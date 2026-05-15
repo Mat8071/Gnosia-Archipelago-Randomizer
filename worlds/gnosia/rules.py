@@ -212,7 +212,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Flowers":
             has_stella,
         "Setup to Tears Go By":
-            has_stella & has_raqio & get_npc_skill_rule("Stella", "Vote"),
+            has_stella & has_raqio & (has_player_engineer | has_npc_engineer) & get_npc_skill_rule("Stella", "Vote"),
         "Setup to Stella Note 5 Event":
             has_stella & has_jonas & has_setsu & has_remnan & has_yuriko & HasAll("Stella Note 1", "Stella Note 2", "Stella Note 3", "Stella Note 4") & get_min_crew_rule(9),
         "Setup to Chipie Note 2 - Result Event Ver.":
