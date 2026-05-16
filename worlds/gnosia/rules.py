@@ -286,7 +286,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Bug Tutorial to Don't Vote Event":
             has_otome & has_raqio & (has_npc_bug | has_player_bug),
         "Bug Tutorial to Otome's Resolution":
-            has_otome & has_stella & has_kukrushka & has_npc_bug,
+            has_otome & has_stella & has_kukrushka & has_shigemichi & has_npc_bug,
         "Bug Tutorial to Raqio Quiz - Guardian Angel":
             has_raqio & has_npc_bug & has_npc_engineer & has_npc_ga, #Simplified logic
         "Bug Tutorial to Inescapable Past":
