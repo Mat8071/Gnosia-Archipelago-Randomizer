@@ -14,9 +14,10 @@ def create_and_connect_regions(world: GnosiaWorld) -> None:
     connect_all_regions(world)
 
 def create_all_regions(world: GnosiaWorld) -> None:
+    #Add always present regions
     region_names = [
         #Non-Event Regions
-        "Starting Region",
+        "Title Screen",
         "Setup",
         "Setsu Note 4 Region",
         "SQ Note 2 Region",
@@ -54,8 +55,6 @@ def create_all_regions(world: GnosiaWorld) -> None:
         "Gina Note 3 Event",
         "Don't Be Fooled Event",
         "Allacosia",
-        "Shower Room - Gina",
-        "Gina In Love",
         "Gina Note 6 Event",
         #Jonas
         "Jonas Note 3 Event",
@@ -162,8 +161,7 @@ def create_all_regions(world: GnosiaWorld) -> None:
         "SQ Note 2 - Result Event Ver.",
         "A Prayer To The Stars",
         #Stella
-        "Plastic Flower",
-        "Stella Protected By Player Result Event",
+        #None: All stella result events are gender-locked to male main characters
         #Yuriko
         "Yuriko Gnosia Result Event",
         "Yuriko Crew Result Event",
@@ -179,6 +177,16 @@ def create_all_regions(world: GnosiaWorld) -> None:
     regions = []
     for region_name in region_names:
         regions.append(Region(region_name, world.player, world.multiworld))
+    #Add optional regions
+    if world.options.allow_gender_specific_logic:
+        gender_specific_events = [
+            "Shower Room - Gina",
+            "Gina In Love",
+            "Plastic Flower",
+            "Stella Protected By Player Result Event",
+        ]
+        for region_name in gender_specific_events:
+            regions.append(Region(region_name, world.player, world.multiworld))
     world.multiworld.regions += regions
 
 def connect_all_regions(world: GnosiaWorld) -> None:
@@ -188,8 +196,8 @@ def connect_all_regions(world: GnosiaWorld) -> None:
         tutorial_loops.append(world.get_region(f"Loop {i + 1}"))
         if i > 0:
             tutorial_loops[i - 1].connect(tutorial_loops[i], f"Loop {i} to Loop {i + 1}")
-    #Connect Starting Region To Loop 1 and Loop 13 to Setup
-    world.get_region("Starting Region").connect(tutorial_loops[0], "Starting Region to Loop 1")
+    #Connect Title Screen To Loop 1 and Loop 13 to Setup
+    world.get_region("Title Screen").connect(tutorial_loops[0], "Title Screen to Loop 1")
     setup = world.get_region("Setup")
     tutorial_loops[-1].connect(setup, "Loop 13 to Setup")
     #Connect Step Forward Event to Loop 6
@@ -290,17 +298,18 @@ def connect_all_regions(world: GnosiaWorld) -> None:
     ]
     for region_name in connected_to_tutorial_after_bug_scenario:
         after_bug_scenario.connect(world.get_region(region_name), f"Bug Tutorial to {region_name}")
-    #Connect Gender-specific events to Yuriko Respec
-    respec_event = world.get_region("Respec & Recollection Event")
-    gender_specific_events = [
-        "Shower Room - Gina",
-        "Gina In Love",
-        "Hope For The Future",
-        "Plastic Flower",
-        "Stella Protected By Player Result Event",
-    ]
-    for region_name in gender_specific_events:
-        respec_event.connect(world.get_region(region_name), f"Respec to {region_name}")
+    if world.options.allow_gender_specific_logic:
+        #Connect Gender-specific events to Yuriko Respec
+        respec_event = world.get_region("Respec & Recollection Event")
+        gender_specific_events = [
+            "Shower Room - Gina",
+            "Gina In Love",
+            "Hope For The Future",
+            "Plastic Flower",
+            "Stella Protected By Player Result Event",
+        ]
+        for region_name in gender_specific_events:
+            respec_event.connect(world.get_region(region_name), f"Respec to {region_name}")
     #Connect Other (Still Unconnected) Event Chains
     connection_dict = {
         "Raqio Note 6 Event": [

@@ -145,11 +145,9 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
     #Goal-Related Rule
     min_notes = ceil((world.options.required_note_percent / 100) * len(items.get_groups()["All Notes"]))
     filled_key = HasGroupUnique("All Notes", min_notes)
-    #Optional Logic
-    gender_specific_allowed = OptionFilter(AllowGenderSpecificLogic, True)
     #Other Rules
     has_event_search = HasAll("Setsu Note 2", "Bug Role")
-    #Define Logic
+    #Define Logic for always present regions
     entrance_to_rule = {
         "Loop 6 to Step Forward Event":
             has_setsu & has_player_crew_aligned,
@@ -321,16 +319,6 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
             has_yuriko & has_player_bug,
         "Bug Tutorial to A Prayer To The Stars":
             has_sq & has_npc_bug & has_player_crew_aligned,
-        "Respec to Shower Room - Gina":
-            gender_specific_allowed & has_gina,
-        "Respec to Gina In Love":
-            gender_specific_allowed & has_gina & has_player_crew_aligned & HasAll("Gina Romance Chain Started", "Apologized to Gina in Shower Room", "Gina Note 1", "Gina Note 2", "Gina Note 3", "Gina Note 4", "Gina Note 5", "Let's Collaborate") & get_stat_rule("Charm", 15),
-        "Respec to Hope For The Future":
-            gender_specific_allowed & has_remnan & HasAll("Remnan Note 4", "Remnan Note 2"),
-        "Respec to Plastic Flower":
-            gender_specific_allowed & has_stella & get_min_crew_rule(11) & has_player_crew_aligned & Has("Stella Note 3"),
-        "Respec to Stella Protected By Player Result Event":
-            gender_specific_allowed & has_stella & has_player_ga,
         "Raqio Note 6 Event to The Final Problem":
             get_min_crew_rule(9) & has_player_crew_aligned & has_npc_bug & has_raqio & has_yuriko,
         "Raqio Note 6 Event to Loop After - Raqio Note 6 Event":
@@ -364,9 +352,25 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "AWWG - Unfilled Key to In The Loop Again":
             filled_key,
     }
-    #Apply All Rules
+    #Apply Rules
     for entrance_name in entrance_to_rule:
         world.set_rule(world.get_entrance(entrance_name), entrance_to_rule[entrance_name])
+    #Add optional region/location rules
+    if world.options.allow_gender_specific_logic:
+        optional = {
+            "Respec to Shower Room - Gina":
+                has_gina,
+            "Respec to Gina In Love":
+                has_gina & has_player_crew_aligned & HasAll("Gina Romance Chain Started", "Apologized to Gina in Shower Room", "Gina Note 1", "Gina Note 2", "Gina Note 3", "Gina Note 4", "Gina Note 5", "Let's Collaborate") & get_stat_rule("Charm", 15),
+            "Respec to Hope For The Future":
+                has_remnan & HasAll("Remnan Note 4", "Remnan Note 2"),
+            "Respec to Plastic Flower":
+                has_stella & get_min_crew_rule(11) & has_player_crew_aligned & Has("Stella Note 3"),
+            "Respec to Stella Protected By Player Result Event":
+                has_stella & has_player_ga,
+        }
+        for entrance_name in optional:
+            world.set_rule(world.get_entrance(entrance_name), optional[entrance_name])
 
 def set_all_location_rules(world: GnosiaWorld) -> None:
     #Currently there are no additional location rules (Besides region access)

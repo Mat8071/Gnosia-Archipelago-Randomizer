@@ -21,7 +21,7 @@ class GnosiaWorld(World):
     item_name_groups = items.get_groups()
     location_name_groups = locations.get_groups()
 
-    origin_region_name = "Loop 1"
+    origin_region_name = "Title Screen"
 
     def create_regions(self) -> None:
         regions.create_and_connect_regions(self)
