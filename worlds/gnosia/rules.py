@@ -7,7 +7,7 @@ from Options import OptionError
 from rule_builder.options import OptionFilter
 from rule_builder.rules import True_, Has, HasAny, HasAll, HasGroupUnique
 
-from .options import RandomizeCharacterUnlocks, AllowGenderSpecificLogic, Goal
+from .options import RandomizeCharacterUnlocks, Goal
 from . import items
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ def get_npc_skill_rule(npc_name: str, skill_name: str) -> rule_builder.rules.Rul
     number_of_notes_required = 0
     current_stats = npc_starting_stats[npc_name].copy()
     if check_stats(current_stats, skill_stat_requirements[skill_name]):
-            return True_()
+        return True_()
     else:
         for _ in range(total_character_notes):
             number_of_notes_required += 1
@@ -152,7 +152,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Loop 6 to Step Forward Event":
             has_setsu & has_player_crew_aligned,
         "Setup to Let's Collaborate Event":
-            has_player_gnosia & has_chipie & (Has("Chipie Note 2") | get_stat_rule("Charm", 15)),
+            has_player_gnosia & has_chipie & get_min_crew_rule(8) & (Has("Chipie Note 2") | get_stat_rule("Charm", 15)),
         "Setup to Chipie & Comet Note Event":
             has_chipie & has_comet,
         "Setup to Chipie Note 5 Event":
