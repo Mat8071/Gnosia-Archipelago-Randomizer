@@ -192,9 +192,9 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Small Talk Event":
             has_shaming & get_npc_skill_rule("Sha-Ming", "Small Talk"),
         "Setup to Sha-Ming's Promise":
-            has_shaming & has_otome & has_player_gnosia & Has("Sha-Ming Note 2"),
+            has_shaming & has_otome & has_player_gnosia & get_min_crew_rule(7) & Has("Sha-Ming Note 2"),
         "Setup to Sha-Ming Gnosia Ally Intro":
-            has_shaming & has_setsu & has_player_gnosia & Has("Setsu Note 2"),
+            has_shaming & has_setsu & has_player_gnosia & get_min_crew_rule(7) & Has("Setsu Note 2"),
         "Setup to Seek Agreement Event":
             has_sq & has_raqio & has_shigemichi & has_remnan & get_npc_skill_rule("Shigemichi", "Seek Agreement"),
         "Setup to Shower Room - Shigemichi":
@@ -246,7 +246,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Remnan & Raqio Crew Result Event":
             has_remnan & has_raqio & has_player_crew_aligned,
         "Setup to Setsu Gnosia Result Event":
-            has_setsu & (has_player_gnosia | has_player_ac_follower),
+            has_setsu & ((has_player_gnosia & get_min_crew_rule(7)) | has_player_ac_follower),
         "Setup to Setsu Crew Result Event":
             has_setsu & has_player_crew_aligned & Has("Setsu Note 2"),
         "Setup to Sha-Ming Gnosia Result Event":
