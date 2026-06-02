@@ -152,7 +152,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Loop 6 to Step Forward Event":
             has_setsu & has_player_crew_aligned,
         "Setup to Let's Collaborate Event":
-            has_player_gnosia & has_chipie & get_min_crew_rule(8) & (Has("Chipie Note 2") | get_stat_rule("Charm", 15)),
+            has_player_gnosia & has_chipie & get_min_crew_rule(7) & (Has("Chipie Note 2") | get_stat_rule("Charm", 15)),
         "Setup to Chipie & Comet Note Event":
             has_chipie & has_comet,
         "Setup to Chipie Note 5 Event":
@@ -373,8 +373,9 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
             world.set_rule(world.get_entrance(entrance_name), optional[entrance_name])
 
 def set_all_location_rules(world: GnosiaWorld) -> None:
-    #Currently there are no additional location rules (Besides region access)
-    pass
+    #Nothing complex as there's only one rule for now...
+    lets_collaborate = world.get_location("Learn About Let's Collaborate")
+    world.set_rule(lets_collaborate, get_min_crew_rule(8))
 
 def set_completion_condition(world: GnosiaWorld) -> None:
     match world.options.goal:
