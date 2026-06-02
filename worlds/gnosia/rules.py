@@ -5,7 +5,7 @@ from math import ceil
 import rule_builder.rules
 from Options import OptionError
 from rule_builder.options import OptionFilter
-from rule_builder.rules import True_, Has, HasAny, HasAll, HasGroupUnique
+from rule_builder.rules import True_, Has, HasAny, HasAll, HasGroupUnique, CanReachRegion
 
 from .options import RandomizeCharacterUnlocks, Goal
 from . import items
@@ -146,7 +146,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
     min_notes = ceil((world.options.required_note_percent / 100) * len(items.get_groups()["All Notes"]))
     filled_key = HasGroupUnique("All Notes", min_notes)
     #Other Rules
-    has_event_search = HasAll("Setsu Note 2", "Bug Role")
+    has_event_search = Has("Setsu Note 2") & CanReachRegion("Bug Tutorial")
     #Define Logic for always present regions
     entrance_to_rule = {
         "Loop 6 to Step Forward Event":
