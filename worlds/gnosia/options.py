@@ -76,12 +76,12 @@ option_groups = [
             RandomizeCharacterUnlocks,
         ],
     ),
-    OptionGroup(
-        "Other Randomization Settings",
-        [
-
-        ],
-    ),
+    #OptionGroup(
+    #    "Other Randomization Settings",
+    #    [
+    #
+    #    ],
+    #),
     OptionGroup(
         "Other Settings",
         [

@@ -3,7 +3,7 @@ from typing import Any
 
 from worlds.AutoWorld import World
 
-from . import items, locations, regions, rules
+from . import items, locations, regions, rules, web_world
 from . import options as gnosia_options
 
 class GnosiaWorld(World):
@@ -12,6 +12,8 @@ class GnosiaWorld(World):
     """
 
     game = "Gnosia"
+
+    web = web_world.GnosiaWebWorld()
 
     options_dataclass = gnosia_options.GnosiaOptions
     options: gnosia_options.GnosiaOptions
