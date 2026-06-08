@@ -256,7 +256,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Shigemichi Crew Result Event":
             has_shigemichi & has_player_crew_aligned,
         "Setup to SQ Note 2 - Result Event Ver.":
-            has_sq & has_remnan & has_player_crew_aligned,
+            has_sq & has_remnan & has_player_crew_aligned & get_min_crew_rule(7),
         "Setup to Yuriko Gnosia Result Event":
             has_yuriko & has_player_crew_aligned,
         "Setup to Yuriko Crew Result Event":
