@@ -2,10 +2,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from math import ceil
 
-import rule_builder.rules
 from Options import OptionError
 from rule_builder.options import OptionFilter
-from rule_builder.rules import True_, Has, HasAny, HasAll, HasGroupUnique, CanReachRegion
+from rule_builder.rules import Rule, True_, Has, HasAny, HasAll, HasGroupUnique, CanReachRegion
 
 from .options import RandomizeCharacterUnlocks, Goal
 from . import items
@@ -13,7 +12,7 @@ from . import items
 if TYPE_CHECKING:
     from .world import GnosiaWorld
 
-def get_stat_rule(stat_name: str, stat_min: int) -> rule_builder.rules.Rule:
+def get_stat_rule(stat_name: str, stat_min: int) -> Rule:
     #TODO: Implement this when levelsanity is a thing
     return True_() #For now...
 
@@ -27,7 +26,7 @@ def raise_stats(starting_stats: list, current_stats: list, max_stats: list, tota
     for i in range(min(len(starting_stats), len(current_stats), len(max_stats))):
         current_stats[i] += ((max_stats[i] - starting_stats[i]) / total_notes) / 2
 
-def get_npc_skill_rule(npc_name: str, skill_name: str) -> rule_builder.rules.Rule:
+def get_npc_skill_rule(npc_name: str, skill_name: str) -> Rule:
     npc_starting_stats = {
         "Gina": [3.5, 4, 7.5, 10, 2, 9],
         "SQ": [5.5, 11, 15.5, 2.5, 14.5, 3],
@@ -95,12 +94,15 @@ def get_npc_skill_rule(npc_name: str, skill_name: str) -> rule_builder.rules.Rul
                 break
     return HasGroupUnique(thing_to_check, number_of_notes_required)
 
-def forbidden_role_rule(role_name: str) -> rule_builder.rules.Rule:
+def forbidden_role_rule(role_name: str) -> Rule:
     #TODO: Implement this when player crew and player gnosia are randomized
     return True_() #For Now...
 
-def get_min_crew_rule(minimum: int) -> rule_builder.rules.Rule:
+def get_min_crew_rule(minimum: int) -> Rule:
     return HasGroupUnique("Characters", minimum - 1) | Has("Progressive Crew Max", minimum - 5)
+
+def get_easy_lie_detect_rule() -> Rule:
+    return HasAny("Engineer Role", "Doctor Role", "Say You're Human")
 
 def set_all_rules(world: GnosiaWorld) -> None:
     set_all_entrance_rules(world)
@@ -160,13 +162,13 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Chipie & Shigemichi Note Event":
             has_chipie & has_shigemichi & has_setsu & Has("Setsu Note 5"),
         "Setup to Comet Note 4 Event":
-            has_comet & has_raqio & (has_player_ac_follower | has_npc_ac_follower),
+            has_comet & has_raqio & (has_player_ac_follower | has_npc_ac_follower) & get_easy_lie_detect_rule(),
         "Setup to Say You're Human Event":
             has_comet & has_sq & get_npc_skill_rule("Comet", "Say You're Human"),
         "Setup to Gina Note 3 Event":
             has_gina & get_min_crew_rule(6) & forbidden_role_rule("Gnosia"),
         "Setup to Don't Be Fooled Event":
-            has_comet & has_gina & has_setsu & HasGroupUnique("Gina Notes", 4),
+            has_comet & has_gina & has_setsu & HasGroupUnique("Gina Notes", 4) & get_easy_lie_detect_rule(),
         "Setup to Gina Note 6 Event":
             (characters_randomized | get_min_crew_rule(12)) & has_gina & has_setsu & has_raqio & has_shigemichi & has_shaming & has_stella & Has("Setsu Note 2"),
         "Setup to Jonas Note 3 Event":
