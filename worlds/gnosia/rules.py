@@ -304,7 +304,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Bug Tutorial to Ace In The Hole":
             has_shaming & get_npc_skill_rule("Sha-Ming", "Grovel"),
         "Bug Tutorial to Game Sermon":
-            has_shigemichi & has_jonas & has_setsu & has_remnan & (has_npc_engineer | has_npc_doctor),
+            has_shigemichi & has_jonas & has_setsu & has_remnan & (has_npc_engineer | has_npc_doctor) & Has("Step Forward"),
         "Bug Tutorial to Fool And Be Fooled":
             has_sq & has_player_crew_aligned & get_npc_skill_rule("SQ", "Let's Collaborate"),
         "Bug Tutorial to Shigemichi In Love":

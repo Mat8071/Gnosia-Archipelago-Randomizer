@@ -153,9 +153,9 @@ ITEM_NAME_TO_ID = {
 
 DEFAULT_ITEM_CLASSIFICATIONS = {
     #Skills
-    "Step Forward": ItemClassification.useful,
+    "Step Forward": ItemClassification.progression | ItemClassification.useful,
     "Definite Human/Enemy": ItemClassification.useful,
-    "Say You're Human": ItemClassification.useful,
+    "Say You're Human": ItemClassification.progression | ItemClassification.useful,
     "Vote": ItemClassification.useful,
     "Don't Vote": ItemClassification.useful,
     "Small Talk": ItemClassification.useful,
