@@ -12,6 +12,43 @@ from . import items
 if TYPE_CHECKING:
     from .world import GnosiaWorld
 
+#Common Rules Definitions
+#Character Rules
+characters_randomized = OptionFilter(RandomizeCharacterUnlocks, True)
+characters_not_randomized = OptionFilter(RandomizeCharacterUnlocks, False)
+has_gina = Has("Gina") | characters_not_randomized
+has_sq = Has("SQ") | characters_not_randomized
+has_raqio = Has("Raqio") | characters_not_randomized
+has_stella = Has("Stella") | characters_not_randomized
+has_shigemichi = Has("Shigemichi") | characters_not_randomized
+has_chipie = Has("Chipie") | characters_not_randomized
+has_remnan = Has("Remnan") | characters_not_randomized
+has_comet = Has("Comet") | characters_not_randomized
+has_yuriko = Has("Yuriko") | characters_not_randomized
+has_jonas = Has("Jonas") | characters_not_randomized
+has_setsu = Has("Setsu") | characters_not_randomized
+has_otome = Has("Otome") | characters_not_randomized
+has_shaming = Has("Sha-Ming") | characters_not_randomized
+has_kukrushka = Has("Kukrushka") | characters_not_randomized
+#Role Rules
+has_player_engineer = Has("Engineer Role")
+has_player_doctor = Has("Doctor Role")
+has_player_ga = Has("Guardian Angel Role")
+has_player_gd = Has("Guard Duty Role")
+has_player_crew = True_()
+has_player_ac_follower = Has("AC Follower Role")
+has_player_gnosia = True_()
+has_player_bug = Has("Bug Role")
+has_player_crew_aligned = has_player_engineer | has_player_doctor | has_player_ga | has_player_gd | has_player_crew
+has_npc_engineer = Has("Engineer Role")
+has_npc_doctor = Has("Doctor Role")
+has_npc_ga = Has("Guardian Angel Role")
+has_npc_gd = Has("Guard Duty Role")
+has_npc_ac_follower = Has("AC Follower Role")
+has_npc_bug = Has("Bug Role")
+#Other Rules
+has_event_search = Has("Setsu Note 2") & CanReachRegion("Bug Tutorial")
+
 def get_stat_rule(stat_name: str, stat_min: int) -> Rule:
     #TODO: Implement this when levelsanity is a thing
     return True_() #For now...
@@ -110,45 +147,9 @@ def set_all_rules(world: GnosiaWorld) -> None:
     set_completion_condition(world)
 
 def set_all_entrance_rules(world: GnosiaWorld) -> None:
-    #Define Common Rules
-    #Character Rules
-    characters_randomized = OptionFilter(RandomizeCharacterUnlocks, True)
-    characters_not_randomized = OptionFilter(RandomizeCharacterUnlocks, False)
-    has_gina = Has("Gina") | characters_not_randomized
-    has_sq = Has("SQ") | characters_not_randomized
-    has_raqio = Has("Raqio") | characters_not_randomized
-    has_stella = Has("Stella") | characters_not_randomized
-    has_shigemichi = Has("Shigemichi") | characters_not_randomized
-    has_chipie = Has("Chipie") | characters_not_randomized
-    has_remnan = Has("Remnan") | characters_not_randomized
-    has_comet = Has("Comet") | characters_not_randomized
-    has_yuriko = Has("Yuriko") | characters_not_randomized
-    has_jonas = Has("Jonas") | characters_not_randomized
-    has_setsu = Has("Setsu") | characters_not_randomized
-    has_otome = Has("Otome") | characters_not_randomized
-    has_shaming = Has("Sha-Ming") | characters_not_randomized
-    has_kukrushka = Has("Kukrushka") | characters_not_randomized
-    #Role Rules
-    has_player_engineer = Has("Engineer Role")
-    has_player_doctor = Has("Doctor Role")
-    has_player_ga = Has("Guardian Angel Role")
-    has_player_gd = Has("Guard Duty Role")
-    has_player_crew = True_()
-    has_player_ac_follower = Has("AC Follower Role")
-    has_player_gnosia = True_()
-    has_player_bug = Has("Bug Role")
-    has_player_crew_aligned = has_player_engineer | has_player_doctor | has_player_ga | has_player_gd | has_player_crew
-    has_npc_engineer = Has("Engineer Role")
-    has_npc_doctor = Has("Doctor Role")
-    has_npc_ga = Has("Guardian Angel Role")
-    has_npc_gd = Has("Guard Duty Role")
-    has_npc_ac_follower = Has("AC Follower Role")
-    has_npc_bug = Has("Bug Role")
-    #Goal-Related Rule
+    #Goal-Related Rules
     min_notes = ceil((world.options.required_note_percent / 100) * len(items.get_groups()["All Notes"]))
     filled_key = HasGroupUnique("All Notes", min_notes)
-    #Other Rules
-    has_event_search = Has("Setsu Note 2") & CanReachRegion("Bug Tutorial")
     #Define Logic for always present regions
     entrance_to_rule = {
         "Loop 6 to Step Forward Event":
@@ -375,7 +376,14 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
             world.set_rule(world.get_entrance(entrance_name), optional[entrance_name])
 
 def set_all_location_rules(world: GnosiaWorld) -> None:
-    #Nothing complex as there's only one rule for now...
+    location_to_rule = {
+        "Learn About Let's Collaborate":
+            get_min_crew_rule(8), #Requires two gnosia to be alive on Night 2
+        "Learn About Jonas 7":
+            get_min_crew_rule(8), #Requires getting to Night 3 with Jonas & Setsu Alive
+        "Learn About Kukrushka 6":
+            get_min_crew_rule(8), #Same as Jonas 7
+    }
     lets_collaborate = world.get_location("Learn About Let's Collaborate")
     world.set_rule(lets_collaborate, get_min_crew_rule(8))
 
