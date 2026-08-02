@@ -384,8 +384,8 @@ def set_all_location_rules(world: GnosiaWorld) -> None:
         "Learn About Kukrushka 6":
             get_min_crew_rule(8), #Same as Jonas 7
     }
-    lets_collaborate = world.get_location("Learn About Let's Collaborate")
-    world.set_rule(lets_collaborate, get_min_crew_rule(8))
+    for location_name in location_to_rule:
+        world.set_rule(world.get_location(location_name), location_to_rule[location_name])
 
 def set_completion_condition(world: GnosiaWorld) -> None:
     match world.options.goal:
