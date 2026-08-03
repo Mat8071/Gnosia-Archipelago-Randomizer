@@ -4,7 +4,7 @@ from math import ceil
 
 from Options import OptionError
 from rule_builder.options import OptionFilter
-from rule_builder.rules import Rule, True_, And, Or, Has, HasAny, HasAll, HasGroupUnique, CanReachRegion
+from rule_builder.rules import Rule, True_, And, Or, Has, HasAny, HasAll, HasGroupUnique, CanReachRegion, TWorld
 
 from .options import RandomizeCharacterUnlocks, Goal
 from .stats_data import CharacterStats, npc_starting_stats, npc_final_stats, skill_stat_requirements
@@ -171,6 +171,15 @@ class HasMinCharacters(Rule["GnosiaWorld"], game="Gnosia"):
             return HasGroupUnique("Characters", self.minimum - 1).resolve(world)
         return Has("Progressive Crew Max", self.minimum - 5).resolve(world)
 
+@dataclasses.dataclass()
+class HasMinGnosia(Rule["GnosiaWorld"], game="Gnosia"):
+
+    minimum: int
+
+    @override
+    def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
+        return HasMinCharacters(self.minimum * 2 + 3).resolve(world)
+
 CREW_ALIGNED_ROLES: set = {
     "Engineer",
     "Doctor",
@@ -218,7 +227,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 HasCharacters("Chipie"),
                 CharacterIsRole("Player", "Gnosia"),
                 CharacterIsRole("Chipie", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
             ),
         "Setup to Chipie & Comet Note Event":
             And(
@@ -257,7 +266,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 HasCharacters("Gina"),
                 CharacterIsRole("Gina", "Gnosia"),
                 CharacterIsNotRole("Player", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
             ),
         "Setup to Don't Be Fooled Event":
             And(
@@ -336,7 +345,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 CharacterIsRole("Player", "Gnosia"),
                 CharacterIsRole("Sha-Ming", "Gnosia"),
                 CharacterIsRole("Otome", *HUMAN_ROLES),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
                 Has("Sha-Ming Note 2"),
             ),
         "Setup to Sha-Ming Gnosia Ally Intro":
@@ -344,7 +353,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 HasCharacters("Sha-Ming", "Setsu"),
                 CharacterIsRole("Player", "Gnosia"),
                 CharacterIsRole("Sha-Ming", "Gnosia"),
-                HasMinCharacters(7),
+                HasMinGnosia(2),
                 Has("Setsu Note 2"),
             ),
         "Setup to Seek Agreement Event":
@@ -378,7 +387,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 CharacterIsRole("SQ", "Gnosia"),
                 CharacterIsNotRole("Remnan", "Gnosia", "Bug"),
                 CharacterIsNotRole("Raqio", "Gnosia"),
-                HasMinCharacters(7),
+                HasMinGnosia(2),
             ), #Always requires loop 25+
         "Setup to Flowers":
             HasCharacters("Stella"),
@@ -440,7 +449,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 CharacterIsRole("Player", *CREW_ALIGNED_ROLES),
                 CharacterIsRole("Jonas", "Gnosia"),
                 CharacterIsRole("SQ", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
             ),
         "Setup to Jonas Note 2 - Result Event Ver.":
             And(
@@ -505,7 +514,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 HasCharacters("Setsu"),
                 CharacterIsRole("Setsu", "Gnosia"),
                 Or(
-                    CharacterIsRole("Player", "Gnosia") & HasMinCharacters(7), #Required for 2 Gnosia
+                    CharacterIsRole("Player", "Gnosia") & HasMinGnosia(2),
                     CharacterIsRole("Player", "AC Follower"),
                 ),
             ), #Always requires loop 20+
@@ -540,7 +549,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 CharacterIsRole("Player", *CREW_ALIGNED_ROLES),
                 CharacterIsRole("Remnan", *CREW_ALIGNED_ROLES),
                 CharacterIsRole("SQ", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 alive crew with Gnosia win
+                HasMinGnosia(2), #Required for 2 alive crew with Gnosia win
             ),
         "Setup to Yuriko Gnosia Result Event":
             And(
@@ -588,7 +597,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 HasCharacters("Gina", "Stella"),
                 CharacterIsRole("Player", *CREW_ALIGNED_ROLES),
                 CharacterIsRole("Gina", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
                 Has("Gina Note 3"),
             ),
         "Bug Tutorial to Jonas & Kukrushka Note Event":
@@ -655,7 +664,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 HasCharacters("Remnan", "SQ", "Raqio"),
                 CharacterIsRole("Remnan", *CREW_ALIGNED_ROLES),
                 CharacterIsRole("SQ", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
                 HasAll("Remnan Note 3", "Yuriko Note 4"),
             ),
         "Bug Tutorial to Remnan Note 2 Event":
@@ -682,7 +691,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                         And(
                             CharacterIsRole("Player", "Gnosia"),
                             CharacterIsRole("Setsu", "Gnosia"),
-                            HasMinCharacters(7), #Required for 2 Gnosia
+                            HasMinGnosia(2),
                         ), #Player & Setsu win as gnosia
                         Or(
                             And(
@@ -700,7 +709,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Bug Tutorial to Setsu Note 3 Event":
             And(
                 HasCharacters("Setsu", "Sha-Ming"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
             ),
         "Bug Tutorial to Ace In The Hole":
             And(
@@ -754,7 +763,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                 CharacterIsRole("Player", *CREW_ALIGNED_ROLES, "Bug"),
                 CharacterIsRole("Setsu", *CREW_ALIGNED_ROLES, "Bug"),
                 CharacterIsRole("Yuriko", "Gnosia"),
-                HasMinCharacters(7), #Required for 2 Gnosia
+                HasMinGnosia(2),
                 HasAll("Yuriko Note 2", "Event Seen: Sha-Ming Gnosia Ally Intro"),
             ), #Always requires loop 40+
         "Bug Tutorial to The Alien Gnos":
@@ -822,7 +831,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                         And(
                             CharacterIsRole("Player", "Gnosia"),
                             CharacterIsRole("Setsu", "Gnosia"),
-                            HasMinCharacters(7), #Required for 2 Gnosia
+                            HasMinGnosia(2),
                         ), #Player & Setsu win as gnosia
                         Or(
                             And(
