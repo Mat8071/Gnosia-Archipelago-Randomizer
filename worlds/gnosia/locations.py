@@ -327,6 +327,7 @@ def create_events(world: GnosiaWorld) -> None:
         "Sha-Ming Gnosia Ally Intro": ["Watch Sha-Ming Gnosia Ally Intro", "Event Seen: Sha-Ming Gnosia Ally Intro"],
         "A World Without Gnosia - Normal Ending Ver.": ["Get Normal Ending", "Event Seen: Normal Ending"],
         "After The Final Problem Result Event": ["Watch ATFPRE", "Can Set Gnosia to Zero"],
+        "Bug Tutorial": ["Unlock Event Search", "Event Search"],
     }
     for region_name in events:
         world.get_region(region_name).add_event(events[region_name][0], events[region_name][1], location_type = GnosiaLocation, item_type = items.GnosiaItem)

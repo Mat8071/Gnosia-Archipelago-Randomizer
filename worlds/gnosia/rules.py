@@ -202,7 +202,6 @@ ALL_ROLES: set = HUMAN_ROLES | {
 characters_randomized = OptionFilter(RandomizeCharacterUnlocks, True)
 characters_not_randomized = OptionFilter(RandomizeCharacterUnlocks, False)
 #Other Rules
-has_event_search = Has("Setsu Note 2") & CanReachRegion("Bug Tutorial")
 has_easy_lie_detect = HasAny("Engineer Role", "Doctor Role", "Say You're Human")
 
 def set_all_rules(world: GnosiaWorld) -> None:
@@ -899,7 +898,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
             has_easy_lie_detect, #You can always detect lies, but it will be hard
         "Setup to Gina Note 6 Event":
             Or(
-                has_event_search | characters_randomized,
+                characters_randomized | Has("Event Search"),
                 HasMinCharacters(12), #Required characters * 2
             ), #You can get the necessary characters by getting lucky
         "Setup to Jonas The Wreck":
@@ -912,12 +911,12 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
             HasRoles("Engineer"), #You can theoretically get a fake doctor Definite Enemy to trigger Vote
         "Bug Tutorial to Citizen Slime":
             Or(
-                characters_randomized | has_event_search,
+                characters_randomized | Has("Event Search"),
                 HasMinCharacters(14) #Required characters * 2
             ), #You can get the necessary characters by getting lucky
         "Bug Tutorial to The Kukrushka Problem":
             Or(
-                characters_randomized | has_event_search,
+                characters_randomized | Has("Event Search"),
                 HasMinCharacters(10), #Required characters * 2
             ), #You can get the necessary characters by getting lucky
         "Bug Tutorial to Game Sermon":
@@ -991,7 +990,8 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
 
 def set_all_location_rules(world: GnosiaWorld) -> None:
     location_to_rule = {
-        #Currently empty...
+        "Unlock Event Search":
+            Has("Setsu Note 2"),
     }
     location_to_soft_rule = {
         "Learn About Let's Collaborate":
