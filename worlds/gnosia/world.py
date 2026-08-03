@@ -25,6 +25,9 @@ class GnosiaWorld(World):
 
     origin_region_name = "Title Screen"
 
+    #UT Stuff
+    glitches_item_name = items.GLITCHES_ITEM_NAME
+
     def create_regions(self) -> None:
         regions.create_and_connect_regions(self)
         locations.create_all_locations(self)

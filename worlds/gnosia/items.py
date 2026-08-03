@@ -7,6 +7,8 @@ from BaseClasses import Item, ItemClassification
 if TYPE_CHECKING:
     from .world import GnosiaWorld
 
+GLITCHES_ITEM_NAME = "Hard Logic"
+
 ITEM_NAME_TO_ID = {
     #Skills
     "Step Forward": 1,
@@ -149,6 +151,9 @@ ITEM_NAME_TO_ID = {
     #Filler Items
     "End Of Loop Exp Bonus": 11000,
     #Traps
+    #No Traps currently...
+    #Special Item (UT)
+    GLITCHES_ITEM_NAME: 1_000_000_000
 }
 
 DEFAULT_ITEM_CLASSIFICATIONS = {
@@ -293,6 +298,8 @@ DEFAULT_ITEM_CLASSIFICATIONS = {
     #Filler Items
     "End Of Loop Exp Bonus": ItemClassification.filler,
     #Traps
+    #No Traps for now...
+    GLITCHES_ITEM_NAME: ItemClassification.progression,
 }
 
 class GnosiaItem(Item):
