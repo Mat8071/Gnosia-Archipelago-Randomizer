@@ -2,24 +2,24 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 from math import ceil
 
+from dataclasses import dataclass, replace, fields
+
 from Options import OptionError
 from rule_builder.options import OptionFilter
-from rule_builder.rules import Rule, True_, And, Or, Has, HasAny, HasAll, HasGroupUnique, CanReachRegion, TWorld
+from rule_builder.rules import Rule, True_, And, Or, Has, HasAny, HasAll, HasGroupUnique, CanReachLocation
 
-from .options import RandomizeCharacterUnlocks, Goal
+from .options import RandomizeCharacterUnlocks, Goal, RandomizeNotes, TutorialHandling
 from .stats_data import CharacterStats, npc_starting_stats, npc_final_stats, skill_stat_requirements
-from . import items
+from . import items, locations
 
-from _collections_abc import Iterable
-
-import dataclasses
+from collections.abc import Iterable
 
 if TYPE_CHECKING:
     from .world import GnosiaWorld
 
 is_glitch_logic = Has(items.GLITCHES_ITEM_NAME)
 
-@dataclasses.dataclass(init=False)
+@dataclass(init=False)
 class HasCharacters(Rule["GnosiaWorld"], game="Gnosia"):
 
     character_names: tuple[str, ...]
@@ -37,7 +37,7 @@ class HasCharacters(Rule["GnosiaWorld"], game="Gnosia"):
     def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
         return (HasAll(*self.character_names) | OptionFilter(RandomizeCharacterUnlocks, False)).resolve(world)
 
-@dataclasses.dataclass(init=False)
+@dataclass(init=False)
 class HasRoles(Rule["GnosiaWorld"], game="Gnosia"):
 
     role_names: tuple[str, ...]
@@ -55,7 +55,7 @@ class HasRoles(Rule["GnosiaWorld"], game="Gnosia"):
     def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
         return HasAll(*(f"{role} Role" for role in self.role_names)).resolve(world)
 
-@dataclasses.dataclass(init=False)
+@dataclass(init=False)
 class CharacterIsRole(Rule["GnosiaWorld"], game="Gnosia"):
 
     character_name: str
@@ -78,7 +78,7 @@ class CharacterIsRole(Rule["GnosiaWorld"], game="Gnosia"):
             return True_().resolve(world)
         return HasAny(*(f"{role} Role" for role in self.role_names)).resolve(world)
 
-@dataclasses.dataclass()
+@dataclass(init=False)
 class CharacterIsNotRole(Rule["GnosiaWorld"], game="Gnosia"):
 
     character_name: str
@@ -101,7 +101,7 @@ class CharacterIsNotRole(Rule["GnosiaWorld"], game="Gnosia"):
         roles.difference_update(self.role_names)
         return CharacterIsRole(self.character_name, *roles).resolve(world)
 
-@dataclasses.dataclass()
+@dataclass()
 class CharacterHasStats(Rule["GnosiaWorld"], game="Gnosia"):
 
     character_name: str
@@ -114,7 +114,7 @@ class CharacterHasStats(Rule["GnosiaWorld"], game="Gnosia"):
         thing_to_check = f"{self.character_name} Notes"
         total_character_notes = len(items.get_groups().get(thing_to_check, []))
         number_of_notes_required = 0
-        current_stats = dataclasses.replace(npc_starting_stats[self.character_name])
+        current_stats = replace(npc_starting_stats[self.character_name])
         if self.check_stats(current_stats, self.required_stats):
             return True_().resolve(world)
         else:
@@ -130,21 +130,21 @@ class CharacterHasStats(Rule["GnosiaWorld"], game="Gnosia"):
 
     @staticmethod
     def check_stats(arg1: CharacterStats, arg2: CharacterStats) -> bool:
-        for field in dataclasses.fields(CharacterStats):
+        for field in fields(CharacterStats):
             if getattr(arg1, field.name) < getattr(arg2, field.name):
                 return False
         return True
 
     @staticmethod
     def raise_stats(starting_stats: CharacterStats, current_stats: CharacterStats, max_stats: CharacterStats, total_notes: int):
-        for field in dataclasses.fields(CharacterStats):
+        for field in fields(CharacterStats):
             starting = getattr(starting_stats, field.name)
             current = getattr(current_stats, field.name)
             maximum = getattr(max_stats, field.name)
             increase = ((maximum - starting) / total_notes) / 2
             setattr(current_stats, field.name, current + increase)
 
-@dataclasses.dataclass()
+@dataclass()
 class CharacterHasSkill(Rule["GnosiaWorld"], game="Gnosia"):
 
     character_name: str
@@ -155,23 +155,27 @@ class CharacterHasSkill(Rule["GnosiaWorld"], game="Gnosia"):
         has_skill_rule = True_()
         if self.character_name == "Player":
             has_skill_rule &= Has(self.skill_name)
+        #Exception for Sha-Ming Grovel with vanilla note placement (Only 3 notes are available)
+        if not world.options.randomize_notes and self.character_name == "Sha-Ming" and self.skill_name == "Grovel":
+            return HasGroupUnique("Sha-Ming Notes", 3).resolve(world)
         return And(
             has_skill_rule,
             CharacterHasStats(self.character_name, skill_stat_requirements[self.skill_name]),
         ).resolve(world)
 
-@dataclasses.dataclass()
+@dataclass()
 class HasMinCharacters(Rule["GnosiaWorld"], game="Gnosia"):
 
     minimum: int
 
     @override
     def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
+        starting_crew_count = world.options.starting_crew_count
         if world.options.randomize_character_unlocks:
             return HasGroupUnique("Characters", self.minimum - 1).resolve(world)
-        return Has("Progressive Crew Max", self.minimum - 5).resolve(world)
+        return Has("Progressive Crew Max", self.minimum - starting_crew_count).resolve(world)
 
-@dataclasses.dataclass()
+@dataclass()
 class HasMinGnosia(Rule["GnosiaWorld"], game="Gnosia"):
 
     minimum: int
@@ -179,6 +183,84 @@ class HasMinGnosia(Rule["GnosiaWorld"], game="Gnosia"):
     @override
     def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
         return HasMinCharacters(self.minimum * 2 + 3).resolve(world)
+
+@dataclass()
+class CanBeOnSameTeam(Rule["GnosiaWorld"], game="Gnosia"):
+
+    character_1: str
+    character_2: str
+
+    @override
+    def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
+        return Or(
+                    And(
+                        CharacterIsRole(self.character_1, *CREW_ALIGNED_ROLES),
+                        CharacterIsRole(self.character_2, *CREW_ALIGNED_ROLES),
+                    ), #Win as crew
+                    And(
+                        CharacterIsRole(self.character_1, "Gnosia"),
+                        CharacterIsRole(self.character_2, "Gnosia"),
+                        HasMinGnosia(2),
+                    ), #Win as gnosia
+                    And(
+                        CharacterIsRole(self.character_1, "AC Follower"),
+                        CharacterIsRole(self.character_2, "Gnosia"),
+                    ), #Character 1 is AC & 2 is Gnosia
+                    And(
+                        CharacterIsRole(self.character_1, "Gnosia"),
+                        CharacterIsRole(self.character_2, "AC Follower"),
+                    ), #Character 1 is Gnosia & 2 is AC
+                ).resolve(world)
+
+@dataclass()
+class CanBeOnOppositeTeams(Rule["GnosiaWorld"], game="Gnosia"):
+
+    character_1: str
+    character_2: str
+
+    @override
+    def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
+        return Or(
+            And(
+                CharacterIsRole(self.character_1, *CREW_ALIGNED_ROLES),
+                CharacterIsNotRole(self.character_2, *CREW_ALIGNED_ROLES),
+            ),
+            And(
+                CharacterIsNotRole(self.character_1, *CREW_ALIGNED_ROLES),
+                CharacterIsRole(self.character_2, *CREW_ALIGNED_ROLES),
+            ),
+            And(
+                CharacterIsRole(self.character_1, "Gnosia", "AC Follower"),
+                CharacterIsNotRole(self.character_2, "Gnosia", "AC Follower"),
+            ),
+            And(
+                CharacterIsNotRole(self.character_1, "Gnosia", "AC Follower"),
+                CharacterIsRole(self.character_2, "Gnosia", "AC Follower"),
+            ),
+            And(
+                CharacterIsRole(self.character_1, "Bug"),
+                CharacterIsNotRole(self.character_2, "Bug"),
+            ),
+            And(
+                CharacterIsNotRole(self.character_1, "Bug"),
+                CharacterIsRole(self.character_2, "Bug"),
+            ),
+        ).resolve(world)
+
+@dataclass()
+class OtherThanCharacterIsRole(Rule["GnosiaWorld"], game="Gnosia"):
+
+    other_than: str
+    role: str
+
+    @override
+    def _instantiate(self, world: GnosiaWorld) -> Rule.Resolved:
+        characters = items.get_groups()["Characters"]
+        characters.add("Player")
+        characters.remove(self.other_than)
+        return Or(
+            *(CharacterIsRole(character, self.role) for character in characters)
+        ).resolve(world)
 
 CREW_ALIGNED_ROLES: set = {
     "Engineer",
@@ -565,7 +647,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Bug Tutorial":
             HasRoles("Bug"),
         "Setup to Bug Loop":
-            HasCharacters("Setsu"), #Always requires Loop 16+
+            HasCharacters("Setsu") | OptionFilter(TutorialHandling, TutorialHandling.option_vanilla, operator="ne"), #Always requires Loop 16+
         "Setup to A World Without Gnosia - First Time Ver.":
             And(
                 HasMinCharacters(15),
@@ -681,29 +763,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Bug Tutorial to Setsu Note 2 Event":
             And(
                 HasCharacters("Setsu"),
-                Or(
-                    And(
-                        CharacterIsRole("Player", *CREW_ALIGNED_ROLES),
-                        CharacterIsRole("Setsu", *CREW_ALIGNED_ROLES),
-                    ), #Player & Setsu win as crew
-                    Or(
-                        And(
-                            CharacterIsRole("Player", "Gnosia"),
-                            CharacterIsRole("Setsu", "Gnosia"),
-                            HasMinGnosia(2),
-                        ), #Player & Setsu win as gnosia
-                        Or(
-                            And(
-                                CharacterIsRole("Player", "AC Follower"),
-                                CharacterIsRole("Setsu", "Gnosia"),
-                            ), #Player AC & Setsu Gnosia
-                            And(
-                                CharacterIsRole("Player", "Gnosia"),
-                                CharacterIsRole("Setsu", "AC Follower"),
-                            ), #Player Gnosia & Setsu AC
-                        ), #Player & Setsu win as AC-Gnosia combo
-                    ),
-                ),
+                CanBeOnSameTeam("Player", "Setsu"),
             ),
         "Bug Tutorial to Setsu Note 3 Event":
             And(
@@ -821,29 +881,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "The Final Problem to After The Final Problem Result Event":
             And(
                 HasCharacters("Setsu", "Yuriko"),
-                Or(
-                    And(
-                        CharacterIsRole("Player", *CREW_ALIGNED_ROLES),
-                        CharacterIsRole("Setsu", *CREW_ALIGNED_ROLES),
-                    ), #Player & Setsu win as crew
-                    Or(
-                        And(
-                            CharacterIsRole("Player", "Gnosia"),
-                            CharacterIsRole("Setsu", "Gnosia"),
-                            HasMinGnosia(2),
-                        ), #Player & Setsu win as gnosia
-                        Or(
-                            And(
-                                CharacterIsRole("Player", "AC Follower"),
-                                CharacterIsRole("Setsu", "Gnosia"),
-                            ), #Player AC & Setsu Gnosia
-                            And(
-                                CharacterIsRole("Player", "Gnosia"),
-                                CharacterIsRole("Setsu", "AC Follower"),
-                            ), #Player Gnosia & Setsu AC
-                        ), #Player & Setsu win as AC-Gnosia combo
-                    ),
-                ),
+                CanBeOnSameTeam("Player", "Setsu"),
             ),
         "The Alien Gnos to Loop After - The Alien Gnos":
             HasCharacters("Setsu"),
@@ -926,7 +964,10 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Bug Tutorial to Starship Oracle":
             And(
                 HasMinCharacters(7), #You can avoid eliminations with ga, bug and by abusing vote ties
-                HasAll("Gina Note 2", "Gina Note 3", "Event Seen: AWWG"), #Otherwise requires loop 40+
+                HasAll("Gina Note 2", "Gina Note 3", "Event Seen: AWWG",
+                    options=[OptionFilter(RandomizeNotes, True)],
+                    filtered_resolution=True,
+                ), #Otherwise requires loop 40+ (Always true with vanilla note placements)
             ),
         "Raqio Quiz - Guardian Angel to Raqio Quiz - Freeze All":
             CharacterIsNotRole("Player", "Engineer"), #You can get this by risking logic errors
@@ -937,9 +978,11 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
     for entrance_name in {*entrance_to_rule, *entrance_to_soft_rule}:
         rule = entrance_to_rule.get(entrance_name, True_()) & entrance_to_soft_rule.get(entrance_name, True_())
         world.set_rule(world.get_entrance(entrance_name), rule)
-    #Add optional region/location rules
+    #Add optional entrance rules
+    optional = {}
+    optional_soft = {}
     if world.options.allow_gender_specific_logic:
-        optional = {
+        optional |= {
             "Respec to Shower Room - Gina":
                 HasCharacters("Gina"),
             "Respec to Gina In Love":
@@ -979,14 +1022,11 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
                     CharacterIsRole("Stella", *CREW_ALIGNED_ROLES),
                 ),
         }
-        optional_soft = {
-            #Currently empty...
-        }
-        for entrance_name in optional_soft:
-            optional_soft[entrance_name] |= is_glitch_logic
-        for entrance_name in {*optional, *optional_soft}:
-            rule = optional.get(entrance_name, True_()) & optional_soft.get(entrance_name, True_())
-            world.set_rule(world.get_entrance(entrance_name), rule)
+    for entrance_name in optional_soft:
+        optional_soft[entrance_name] |= is_glitch_logic
+    for entrance_name in {*optional, *optional_soft}:
+        rule = optional.get(entrance_name, True_()) & optional_soft.get(entrance_name, True_())
+        world.set_rule(world.get_entrance(entrance_name), rule)
 
 def set_all_location_rules(world: GnosiaWorld) -> None:
     location_to_rule = {
@@ -1006,10 +1046,247 @@ def set_all_location_rules(world: GnosiaWorld) -> None:
     for location_name in {*location_to_rule, *location_to_soft_rule}:
         rule = location_to_rule.get(location_name, True_()) & location_to_soft_rule.get(location_name, True_())
         world.set_rule(world.get_location(location_name), rule)
+    #Add optional location rules
+    optional = {}
+    optional_soft = {}
+    if world.options.add_role_achievement_locations:
+        optional |= {
+            "Intrepid Investigator Achievement":
+                And(
+                    CharacterIsRole("Player", "Engineer"),
+                    HasMinGnosia(3),
+                ),
+            "Guardian Angel Achievement":
+                CharacterIsRole("Player", "Guardian Angel"),
+            "Hero Achievement":
+                And(
+                    CharacterIsRole("Player", *CREW_ALIGNED_ROLES),
+                    HasMinGnosia(6),
+                ),
+            "Loyal Servant Achievement":
+                And(
+                    CharacterIsRole("Player", "AC Follower"),
+                    Or(
+                        OtherThanCharacterIsRole("Player", "Engineer"),
+                        OtherThanCharacterIsRole("Player", "Doctor"),
+                    ),
+                ),
+            "Lonely Battle Achievement":
+                And(
+                    CharacterIsRole("Player", "Gnosia"),
+                    HasMinCharacters(15),
+                ),
+            "Destroyer of the Universe Achievement":
+                And(
+                    CharacterIsRole("Player", "Bug"),
+                    Or(
+                        OtherThanCharacterIsRole("Player", "Engineer"),
+                        OtherThanCharacterIsRole("Player", "Doctor"),
+                    ),
+                ),
+        }
+    if world.options.add_win_with_character_locations:
+        optional |= {
+            "Win With Gina":
+                And(
+                    HasCharacters("Gina"),
+                    CanBeOnSameTeam("Player", "Gina"),
+                ),
+            "Win With SQ":
+                And(
+                    HasCharacters("SQ"),
+                    CanBeOnSameTeam("Player", "SQ"),
+                ),
+            "Win With Raqio":
+                And(
+                    HasCharacters("Raqio"),
+                    CanBeOnSameTeam("Player", "Raqio"),
+                ),
+            "Win With Stella":
+                And(
+                    HasCharacters("Stella"),
+                    CanBeOnSameTeam("Player", "Stella"),
+                ),
+            "Win With Shigemichi":
+                And(
+                    HasCharacters("Shigemichi"),
+                    CanBeOnSameTeam("Player", "Shigemichi"),
+                ),
+            "Win With Chipie":
+                And(
+                    HasCharacters("Chipie"),
+                    CanBeOnSameTeam("Player", "Chipie"),
+                ),
+            "Win With Remnan":
+                And(
+                    HasCharacters("Remnan"),
+                    CanBeOnSameTeam("Player", "Remnan"),
+                ),
+            "Win With Comet":
+                And(
+                    HasCharacters("Comet"),
+                    CanBeOnSameTeam("Player", "Comet"),
+                ),
+            "Win With Yuriko":
+                And(
+                    HasCharacters("Yuriko"),
+                    CanBeOnSameTeam("Player", "Yuriko"),
+                ),
+            "Win With Jonas":
+                And(
+                    HasCharacters("Jonas"),
+                    CanBeOnSameTeam("Player", "Jonas"),
+                ),
+            "Win With Setsu":
+                And(
+                    HasCharacters("Setsu"),
+                    CanBeOnSameTeam("Player", "Setsu"),
+                ),
+            "Win With Otome":
+                And(
+                    HasCharacters("Otome"),
+                    CanBeOnSameTeam("Player", "Otome"),
+                ),
+            "Win With Sha-Ming":
+                And(
+                    HasCharacters("Sha-Ming"),
+                    CanBeOnSameTeam("Player", "Sha-Ming"),
+                ),
+            "Win With Kukrushka":
+                And(
+                    HasCharacters("Kukrushka"),
+                    CanBeOnSameTeam("Player", "Kukrushka"),
+                ),
+        }
+    if world.options.add_win_against_character_locations:
+        optional |= {
+            "Win Against Gina":
+                And(
+                    HasCharacters("Gina"),
+                    CanBeOnOppositeTeams("Player", "Gina"),
+                ),
+            "Win Against SQ":
+                And(
+                    HasCharacters("SQ"),
+                    CanBeOnOppositeTeams("Player", "SQ"),
+                ),
+            "Win Against Raqio":
+                And(
+                    HasCharacters("Raqio"),
+                    CanBeOnOppositeTeams("Player", "Raqio"),
+                ),
+            "Win Against Stella":
+                And(
+                    HasCharacters("Stella"),
+                    CanBeOnOppositeTeams("Player", "Stella"),
+                ),
+            "Win Against Shigemichi":
+                And(
+                    HasCharacters("Shigemichi"),
+                    CanBeOnOppositeTeams("Player", "Shigemichi"),
+                ),
+            "Win Against Chipie":
+                And(
+                    HasCharacters("Chipie"),
+                    CanBeOnOppositeTeams("Player", "Chipie"),
+                ),
+            "Win Against Remnan":
+                And(
+                    HasCharacters("Remnan"),
+                    CanBeOnOppositeTeams("Player", "Remnan"),
+                ),
+            "Win Against Comet":
+                And(
+                    HasCharacters("Comet"),
+                    CanBeOnOppositeTeams("Player", "Comet"),
+                ),
+            "Win Against Yuriko":
+                And(
+                    HasCharacters("Yuriko"),
+                    CanBeOnOppositeTeams("Player", "Yuriko"),
+                ),
+            "Win Against Jonas":
+                And(
+                    HasCharacters("Jonas"),
+                    CanBeOnOppositeTeams("Player", "Jonas"),
+                ),
+            "Win Against Setsu":
+                And(
+                    HasCharacters("Setsu"),
+                    CanBeOnOppositeTeams("Player", "Setsu"),
+                ),
+            "Win Against Otome":
+                And(
+                    HasCharacters("Otome"),
+                    CanBeOnOppositeTeams("Player", "Otome"),
+                ),
+            "Win Against Sha-Ming":
+                And(
+                    HasCharacters("Sha-Ming"),
+                    CanBeOnOppositeTeams("Player", "Sha-Ming"),
+                ),
+            "Win Against Kukrushka":
+                And(
+                    HasCharacters("Kukrushka"),
+                    CanBeOnOppositeTeams("Player", "Kukrushka"),
+                ),
+        }
+    if world.options.add_win_as_role_locations:
+        optional |= {
+            "Win As Engineer":
+                CharacterIsRole("Player", "Engineer"),
+            "Win As Doctor":
+                CharacterIsRole("Player", "Doctor"),
+            "Win As Guardian Angel":
+                CharacterIsRole("Player", "Guardian Angel"),
+            "Win As Guard Duty":
+                CharacterIsRole("Player", "Guard Duty"),
+            "Win As Crew Member":
+                CharacterIsRole("Player", "Crew Member"),
+            "Win As AC Follower":
+                CharacterIsRole("Player", "AC Follower"),
+            "Win As Gnosia":
+                CharacterIsRole("Player", "Gnosia"),
+            "Win As Bug":
+                CharacterIsRole("Player", "Bug"),
+        }
+    if world.options.add_win_against_role_locations:
+        optional |= {
+            "Win Against Engineer":
+                OtherThanCharacterIsRole("Player", "Engineer"),
+            "Win Against Doctor":
+                OtherThanCharacterIsRole("Player", "Doctor"),
+            "Win Against Guardian Angel":
+                OtherThanCharacterIsRole("Player", "Guardian Angel"),
+            "Win Against Guard Duty":
+                OtherThanCharacterIsRole("Player", "Guard Duty"),
+            "Win Against Crew Member":
+                OtherThanCharacterIsRole("Player", "Crew Member"),
+            "Win Against AC Follower":
+                OtherThanCharacterIsRole("Player", "AC Follower"),
+            "Win Against Gnosia":
+                OtherThanCharacterIsRole("Player", "Gnosia"),
+            "Win Against Bug":
+                OtherThanCharacterIsRole("Player", "Bug"),
+        }
+    for location_name in optional_soft:
+        optional_soft[location_name] |= is_glitch_logic
+    for location_name in {*optional, *optional_soft}:
+        rule = optional.get(location_name, True_()) & optional_soft.get(location_name, True_())
+        world.set_rule(world.get_location(location_name), rule)
 
 def set_completion_condition(world: GnosiaWorld) -> None:
     match world.options.goal:
         case Goal.option_normal_ending:
             world.set_completion_rule(Has("Event Seen: Normal Ending"))
+        case Goal.option_role_achievements:
+            achievements = locations.get_groups()["Achievements"]
+            achievements.difference_update(world.options.excluded_achievements)
+            achievements.difference_update(world.options.exclude_locations)
+            world.set_completion_rule(
+                And(
+                    *(CanReachLocation(achievement) for achievement in achievements)
+                ),
+            )
         case _:
             raise OptionError("Unknown or Undefined Goal")

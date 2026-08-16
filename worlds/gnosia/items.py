@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from BaseClasses import Item, ItemClassification
+from Options import OptionError
 
 if TYPE_CHECKING:
     from .world import GnosiaWorld
@@ -310,25 +311,7 @@ def get_random_filler_item_name(world: GnosiaWorld) -> str:
 
 def get_groups() -> dict[str, set[str]]:
     #Create Groups
-    skills = {
-        "Step Forward",
-        "Definite Human/Enemy",
-        "Say You're Human",
-        "Vote",
-        "Don't Vote",
-        "Small Talk",
-        "Freeze All",
-        "Let's Collaborate",
-        "Seek Agreement",
-        "Block Argument",
-        "Exaggerate",
-        "Obfuscate",
-        "Retaliate",
-        "Regret",
-        "Seek Help",
-        "Don't Be Fooled",
-        "Grovel",
-    }
+    skills = set()
     notes = {
         "Gina": set(),
         "SQ": set(),
@@ -346,19 +329,29 @@ def get_groups() -> dict[str, set[str]]:
         "Kukrushka": set(),
     }
     characters = set(notes.keys())
-    roles = {
-        "Engineer Role",
-        "Doctor Role",
-        "Guardian Angel Role",
-        "Guard Duty Role",
-        "AC Follower Role",
-        "Bug Role",
+    roles = set()
+    ungrouped = {
+        "Progressive Crew Max",
+        "End Of Loop Exp Bonus",
+        GLITCHES_ITEM_NAME,
     }
     #Populate Groups
     for item_name in ITEM_NAME_TO_ID:
+        #Skip characters
+        if item_name in characters:
+            continue
+        was_note = False
         for character_name in notes:
             if item_name.startswith(f"{character_name} Note"):
                 notes[character_name].add(item_name)
+                was_note = True
+                break
+        if was_note:
+            continue
+        if item_name.endswith(" Role"):
+            roles.add(item_name)
+        elif item_name not in ungrouped:
+            skills.add(item_name)
     #Return Groups
     return {
         "Skills": skills,
@@ -386,165 +379,38 @@ def create_item_with_correct_classification(world: GnosiaWorld, name: str) -> Gn
     return GnosiaItem(name, classification, ITEM_NAME_TO_ID[name], world.player)
 
 def create_all_items(world: GnosiaWorld) -> None:
-    itempool: list[Item] = [
-        #Skills
-        world.create_item("Step Forward"),
-        world.create_item("Definite Human/Enemy"),
-        world.create_item("Say You're Human"),
-        world.create_item("Vote"),
-        world.create_item("Don't Vote"),
-        world.create_item("Small Talk"),
-        world.create_item("Freeze All"),
-        world.create_item("Let's Collaborate"),
-        world.create_item("Seek Agreement"),
-        world.create_item("Block Argument"),
-        world.create_item("Exaggerate"),
-        world.create_item("Obfuscate"),
-        world.create_item("Retaliate"),
-        world.create_item("Regret"),
-        world.create_item("Seek Help"),
-        world.create_item("Don't Be Fooled"),
-        world.create_item("Grovel"),
-        #Notes & Characters
-        #Gina
-        world.create_item("Gina Note 1"),
-        world.create_item("Gina Note 2"),
-        world.create_item("Gina Note 3"),
-        world.create_item("Gina Note 4"),
-        world.create_item("Gina Note 5"),
-        world.create_item("Gina Note 6"),
-        #SQ
-        world.create_item("SQ Note 1"),
-        world.create_item("SQ Note 2"),
-        world.create_item("SQ Note 3"),
-        world.create_item("SQ Note 4"),
-        world.create_item("SQ Note 5"),
-        #Raqio
-        world.create_item("Raqio Note 1"),
-        world.create_item("Raqio Note 2"),
-        world.create_item("Raqio Note 3"),
-        world.create_item("Raqio Note 4"),
-        world.create_item("Raqio Note 5"),
-        world.create_item("Raqio Note 6"),
-        #Stella
-        world.create_item("Stella Note 1"),
-        world.create_item("Stella Note 2"),
-        world.create_item("Stella Note 3"),
-        world.create_item("Stella Note 4"),
-        world.create_item("Stella Note 5"),
-        #Shigemichi
-        world.create_item("Shigemichi Note 1"),
-        world.create_item("Shigemichi Note 2"),
-        world.create_item("Shigemichi Note 3"),
-        world.create_item("Shigemichi Note 4"),
-        world.create_item("Shigemichi Note 5"),
-        world.create_item("Shigemichi Note 6"),
-        world.create_item("Shigemichi Note 7"),
-        #Chipie
-        world.create_item("Chipie Note 1"),
-        world.create_item("Chipie Note 2"),
-        world.create_item("Chipie Note 3"),
-        world.create_item("Chipie Note 4"),
-        world.create_item("Chipie Note 5"),
-        world.create_item("Chipie Note 6"),
-        #Remnan
-        world.create_item("Remnan Note 1"),
-        world.create_item("Remnan Note 2"),
-        world.create_item("Remnan Note 3"),
-        world.create_item("Remnan Note 4"),
-        world.create_item("Remnan Note 5"),
-        #Comet
-        world.create_item("Comet Note 1"),
-        world.create_item("Comet Note 2"),
-        world.create_item("Comet Note 3"),
-        world.create_item("Comet Note 4"),
-        world.create_item("Comet Note 5"),
-        world.create_item("Comet Note 6"),
-        world.create_item("Comet Note 7"),
-        #Yuriko
-        world.create_item("Yuriko Note 1"),
-        world.create_item("Yuriko Note 2"),
-        world.create_item("Yuriko Note 3"),
-        world.create_item("Yuriko Note 4"),
-        world.create_item("Yuriko Note 5"),
-        world.create_item("Yuriko Note 6"),
-        #Jonas
-        world.create_item("Jonas Note 1"),
-        world.create_item("Jonas Note 2"),
-        world.create_item("Jonas Note 3"),
-        world.create_item("Jonas Note 4"),
-        world.create_item("Jonas Note 5"),
-        world.create_item("Jonas Note 6"),
-        world.create_item("Jonas Note 7"),
-        #Setsu
-        world.create_item("Setsu Note 1"),
-        world.create_item("Setsu Note 2"),
-        world.create_item("Setsu Note 3"),
-        world.create_item("Setsu Note 4"),
-        world.create_item("Setsu Note 5"),
-        world.create_item("Setsu Note 6"),
-        #Otome
-        world.create_item("Otome Note 1"),
-        world.create_item("Otome Note 2"),
-        world.create_item("Otome Note 3"),
-        world.create_item("Otome Note 4"),
-        world.create_item("Otome Note 5"),
-        world.create_item("Otome Note 6"),
-        #Sha-Ming
-        world.create_item("Sha-Ming Note 1"),
-        world.create_item("Sha-Ming Note 2"),
-        world.create_item("Sha-Ming Note 3"),
-        world.create_item("Sha-Ming Note 4"),
-        #Kukrushka
-        world.create_item("Kukrushka Note 1"),
-        world.create_item("Kukrushka Note 2"),
-        world.create_item("Kukrushka Note 3"),
-        world.create_item("Kukrushka Note 4"),
-        world.create_item("Kukrushka Note 5"),
-        world.create_item("Kukrushka Note 6"),
-        #Roles
-        world.create_item("Engineer Role"),
-        world.create_item("Doctor Role"),
-        world.create_item("Guardian Angel Role"),
-        world.create_item("Guard Duty Role"),
-        world.create_item("AC Follower Role"),
-        world.create_item("Bug Role"),
-    ]
+    itempool: list[Item] = []
 
     #Check Options
+    groups = get_groups()
+    if world.options.randomize_skills:
+        itempool.extend(world.create_item(skill) for skill in groups["Skills"])
+
+    needed_characters = world.options.starting_crew_count.value
     if world.options.randomize_character_unlocks:
-        # Guarantee at least 4 Starting Characters
-        all_characters = {
-            "Gina",
-            "SQ",
-            "Raqio",
-            "Stella",
-            "Shigemichi",
-            "Chipie",
-            "Remnan",
-            "Comet",
-            "Yuriko",
-            "Jonas",
-            "Setsu",
-            "Otome",
-            "Sha-Ming",
-            "Kukrushka",
-        }
-        # Pick random characters until you have 4 Starting Characters
+        # Guarantee the necessary amount of Starting Characters
+        all_characters = groups["Characters"]
+        # Pick random characters until you have enough Starting Characters
         remaining_characters = all_characters.copy()
+        priority = world.options.priority_starting_characters.value
         start_inventory_from_pool = world.options.start_inventory_from_pool
         guaranteed_starting_characters = set()
         for item_name in start_inventory_from_pool:
             if item_name in all_characters:
                 guaranteed_starting_characters.add(item_name)
                 remaining_characters.remove(item_name)
-        random_starting_characters = set()
-        while len(random_starting_characters) + len(guaranteed_starting_characters) < 4:
-            random_character = world.random.choice(tuple(remaining_characters))
+                priority.discard(item_name)
+        random_starting_characters: set[str] = set()
+        starting_character_count = len(guaranteed_starting_characters) + 1 #Player
+        while starting_character_count < needed_characters:
+            pool = priority if priority else remaining_characters
+            random_character = world.random.choice(tuple(sorted(pool)))
             random_starting_characters.add(random_character)
+            priority.discard(random_character)
             remaining_characters.remove(random_character)
+            starting_character_count += 1
         # Pre-Collect the chosen characters
-        for character in random_starting_characters:
+        for character in tuple(sorted(random_starting_characters)):
             world.push_precollected(world.create_item(character))
         characters = []
         # Put all non-randomly chosen characters in the pool
@@ -553,14 +419,27 @@ def create_all_items(world: GnosiaWorld) -> None:
             characters.append(world.create_item(character_name))
         itempool += characters
     else:
-        for _ in range(10):
+        for _ in range(15 - needed_characters):
             itempool.append(world.create_item("Progressive Crew Max"))
+
+    if world.options.randomize_notes:
+        itempool.extend(world.create_item(note) for note in groups["All Notes"])
+
+    if world.options.randomize_role_unlocks:
+        itempool.extend(world.create_item(role) for role in groups["Roles"])
     
     #Match number of items to number of locations
     number_of_items = len(itempool)
     number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
     needed_number_of_filler_items = number_of_unfilled_locations - number_of_items
 
+    if world.options.tutorial_handling == "skip_and_remove_locations" and needed_number_of_filler_items < 0:
+        raise OptionError(
+            "Not enough extra locations were added in order to be able to"
+            "remove the tutorial locations"
+        )
+
+
     itempool += [world.create_filler() for _ in range(needed_number_of_filler_items)]
 
-    world.multiworld.itempool += itempool
+    world.multiworld.itempool += sorted(itempool)

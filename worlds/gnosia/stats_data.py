@@ -1,6 +1,6 @@
-import dataclasses
+from dataclasses import dataclass
 
-@dataclasses.dataclass()
+@dataclass()
 class CharacterStats:
 
     charisma: float = 0.0
