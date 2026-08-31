@@ -475,7 +475,7 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
         "Setup to Tears Go By":
             And(
                 HasCharacters("Stella", "Raqio"),
-                HasRoles("Engineer") | HasRoles("Doctor"),
+                HasRoles("Engineer"),
                 CharacterHasSkill("Stella", "Vote"),
             ),
         "Setup to Stella Note 5 Event":
@@ -945,8 +945,6 @@ def set_all_entrance_rules(world: GnosiaWorld) -> None:
             CharacterHasStats("Player", CharacterStats(charm=20)), #Or loop 60+
         "Setup to Let's Play":
             Has("Event Seen: AWWG"), #You can get this event without this requirement on loop 65+
-        "Setup to Tears Go By":
-            HasRoles("Engineer"), #You can theoretically get a fake doctor Definite Enemy to trigger Vote
         "Bug Tutorial to Citizen Slime":
             Or(
                 characters_randomized | Has("Event Search"),
