@@ -1033,7 +1033,7 @@ def set_all_location_rules(world: GnosiaWorld) -> None:
     }
     location_to_soft_rule = {
         "Learn About Let's Collaborate":
-            HasMinCharacters(8), #You can use gd, bug and vote ties to get to Night 2 with 2 Gnosia alive
+            HasMinCharacters(8), #You can get this on Night 1, but it's difficult. (Or on Night 2 with vote ties etc.)
         "Learn About Jonas 7":
             HasMinCharacters(8), #You can use gd, bug and vote ties to get to Night 3 with you, Setsu and Jonas alive
         "Learn About Kukrushka 6":
